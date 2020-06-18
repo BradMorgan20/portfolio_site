@@ -5,10 +5,13 @@
 
 body, html {
     height: 100%;
+
+}
+
+.wrap{
     background-image:url("/static/portfolio_site/media/milky-way.jpeg");
     background-repeat:no-repeat;
-    background-size: cover;
-    animation: rotation 2s infinite linear;
+    background-size: 100% auto;
 }
 
 h1, h2, h4, label {
@@ -16,7 +19,7 @@ h1, h2, h4, label {
     font-family: pixelBoy;
 }
 
-p, li {
+p, li, a {
     color: white;
 }
 
@@ -88,4 +91,8 @@ div.wrap {
 
 input:invalid:required {
     border: red;
+}
+
+nav {
+    background-color: #1B1C1C;
 }

@@ -16,6 +16,11 @@ class PersonListView(SingleTableView):
 
 
 def index(request):
+    """
+    Index for site. Loads index.html
+    :param request:
+    :return: render
+    """
     suggested_projects = Suggestions.objects.all()
     approved_projects = Projects.objects.all()
     table = SuggestionTable(Suggestions.objects.filter(approved=1))
@@ -33,7 +38,11 @@ def index(request):
 
 
 def suggest(request):
-    #Do some stuff
+    """
+    View to process suggestions from Suggest Form.
+    :param request:
+    :return: JsonResponse
+    """
     success = "Completed Successfully"
     time_now = datetime.datetime.now()
     suggest = Suggestions(contributor_name=request.POST.get('contributor'), created_date=time_now, suggestion_text=request.POST.get('suggestion'), completed_status=False)
@@ -42,9 +51,17 @@ def suggest(request):
 
 
 def vote(request):
-    id_selected = request.POST.get('vote_id')
-    selected_suggestion = Suggestions.objects.get(pk=id_selected)
-    selected_suggestion.vote_count += 1
-    selected_suggestion.save()
+    """
+    View to process votes on suggestions from Vote Form.
+    :param request:
+    :return: JsonResponse
+    """
+    id_selected = request.POST.get('myCheckboxes')
+    id_selected = str(id_selected)
+    ids = id_selected.split(",")
+    for id in ids:
+        selected_suggestion = Suggestions.objects.get(pk=id)
+        selected_suggestion.vote_count += 1
+        selected_suggestion.save()
     success = "Completed Successfully"
     return JsonResponse({"success": success}, status=200)

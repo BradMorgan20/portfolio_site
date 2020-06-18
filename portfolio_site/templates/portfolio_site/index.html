@@ -7,6 +7,7 @@
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'portfolio_site/bootstrap-4.5.0-dist/css/bootstrap.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'portfolio_site/style.css' %}">
+    <script src="https://kit.fontawesome.com/9bd400d4a2.js" crossorigin="anonymous"></script>
     <title>Portfolio</title>
 </head>
 <body>
@@ -18,15 +19,33 @@
                 <h2>Hyper-speed into one of my projects - or see my challenges below!</h2>
             </div>
         </div>
+        <nav class="navbar navbar-expand row">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'home' %}" style="color: white">
+                        <i class="fas fa-home fa-2x"></i>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin:index' %}" style="color: white">
+                        <i class="fas fa-cogs fa-2x"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
     </div>
     <div class="body-container container-fluid">
         <div class="body-row row">
             {% for project in approved_projects %}
                 <div class="body-col col-sm-4">
-                    <div class="body-box rounded">
+                    <div class="body-box rounded-0">
                         <h4>{{ project.project_name }}</h4>
                         <p>{{ project.project_info }}</p>
-                        <p>{{ project.project_link }}</p>
+                        {% if project.project_link %}
+                            <a href="{{ project.project_link }}" target="_blank">
+                                <img src="/static/portfolio_site/media/GitHub-Mark-Light-32px.png">
+                            </a>
+                        {% endif %}
                         </ul>
                     </div>
                 </div>
@@ -39,7 +58,7 @@
                 <h1>Challenge me to a Project!</h1>
                 <p>Set me a challenge using the form below!</p>
                 <div class="suggest-form">
-                    <form method="post" action="{% url 'portfolio_site:suggest' %}" id="suggest-form">
+                    <form method="post" action="{% url 'suggest' %}" id="suggest-form">
                         {% csrf_token %}
                         <label for="contributor">Contributor</label>
                         <input type="text" name="contributor" id="contributor" required/>
@@ -52,20 +71,20 @@
             </div>
             <div class="footer-col-2 col-sm-5">
                 <h1>Vote on submitted projects!</h1>
-                <form method="post" id="vote-form" action=" {% url 'portfolio_site:vote' %}">
+                <form method="post" id="vote-form" action=" {% url 'vote' %}">
                     {% csrf_token %}
                     <table id="vote-data">
-                        <tr>
-                            <th>Suggestion</th>
-                            <th>Vote Count</th>
-                            <th>Vote</th>
-                        </tr>
+                        <th>Contributor</th>
+                        <th>Suggestion</th>
+                        <th>Vote Count</th>
+                        <th>Vote</th>
                         <tbody>
-                        {% for project in approved_projects %}
+                        {% for project in suggested_projects %}
                             <tr>
+                                <td>{{ project.contributor_name }}</td>
                                 <td>{{ project.suggestion_text }}</td>
                                 <td>{{ project.vote_count }}</td>
-                                <td><input type="radio" id="vote-{{ project.id }}" name="vote_id"
+                                <td><input type="checkbox" id="vote-{{ project.id }}" name="myCheckboxes"
                                            value={{ project.id }}></td>
                             </tr>
                         {% endfor %}
@@ -80,33 +99,18 @@
             </div>
         </div>
     </div>
+    <img id="background" src="/static/portfolio_site/media/milky-way.jpeg">
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 {% block javascript %}
     <script>
-        $("#suggest-form").submit(function (e) {
-            e.preventDefault();
-            var serializedData = $(this).serialize();
-                $.ajax({
-                    type: "POST",
-                    url: {% url 'portfolio_site:suggest' %},
-                    data: serializedData,
-                    dataType: "json",
-                    success: function (response) {
-                        window.location.reload();
-                    },
-                    error: function (response) {
-                        alert("Request was not successful. Please try again.");
-                    }
-                })
-        });
 
-        $("#vote-form").submit(function (e) {
+        $("#suggest-form").submit(function (e) {
             e.preventDefault();
             var serializedData = $(this).serialize();
             $.ajax({
                 type: "POST",
-                url: {% url 'portfolio_site:vote' %},
+                url: {% url 'suggest' %},
                 data: serializedData,
                 dataType: "json",
                 success: function (response) {
@@ -117,6 +121,42 @@
                 }
             })
         });
+
+        $("#vote-form").submit(function (e) {
+            e.preventDefault();
+            var validData = checkValidation();
+            if (validData) {
+                var myCheckboxes = new Array();
+                $("input:checked").each(function () {
+                    myCheckboxes.push($(this).val());
+                });
+                $.ajax({
+                    type: "POST",
+                    url: {% url 'vote' %},
+                    dataType: 'html',
+                    data: 'csrfmiddlewaretoken='+$("input[name=csrfmiddlewaretoken]").val() + '&myCheckboxes='+ myCheckboxes,
+                    success: function (response) {
+                        window.location.reload();
+                    },
+                    error: function (response) {
+                        alert("Request was not successful. Please try again.");
+                    }
+                })
+            } else {
+                alert("Please enter an option!");
+            }
+        })
+        ;
+
+        function checkValidation() {
+            var elements = document.getElementsByName("myCheckboxes");
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i].type == 'checkbox' && elements[i].checked) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         $(document).ready(function () {
             $('#vote-data').after('<div id="nav"></div>');
